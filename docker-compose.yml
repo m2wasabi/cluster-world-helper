@@ -1,0 +1,73 @@
+version: "3"
+volumes:
+  data-www:
+
+services:
+  # data-www
+  data-www:
+    container_name: ${PROJECT_NAME}_data-www
+    image: busybox
+    volumes:
+      - ./app:/app
+
+  ## php-fpm
+  php-fpm:
+    container_name: ${PROJECT_NAME}_php-fpm
+    build: ./.docker/localdev/php-fpm
+    volumes:
+      - data-www:/app
+      - ./.docker/localdev/php-fpm/scripts:/scripts
+    depends_on:
+      - mysql
+      - redis
+    working_dir: /app
+    environment:
+      APP_NAME: ${PROJECT_NAME}
+      APP_KEY: base64:1PCJD2skvjBXiXwxN7US8DdM3QiSNTuouD7CzSFo0dY=
+      APP_ENV: local
+      APP_DEBUG: "true"
+      APP_URL: http://localhost:8080
+      DB_CONNECTION: mysql
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_DATABASE: homestead
+      DB_USERNAME: homestead
+      DB_PASSWORD: secret
+      REDIS_HOST: redis
+      REDIS_PORT:
+
+  # nginx
+  nginx:
+    container_name: ${PROJECT_NAME}_nginx
+    build: ./.docker/localdev/nginx
+    volumes:
+      - data-www:/app
+      # - ./swagger:/swagger
+      - ./.docker/localdev/nginx/conf.d:/etc/nginx/conf.d
+    depends_on:
+      - php-fpm
+      # - node
+    ports:
+      - "8080:8080"
+      - "443:443"
+    working_dir: /app
+
+  # mysql
+  mysql:
+    container_name: ${PROJECT_NAME}_mysql
+    image: mysql
+    volumes:
+      - ./.docker/localdev/mysql/custom.cnf:/etc/mysql/conf.d/custom.cnf
+      - ./.mysql_data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_DATABASE: homestead
+      MYSQL_USER: homestead
+      MYSQL_PASSWORD: secret
+
+  ## redis
+  redis:
+    container_name: ${PROJECT_NAME}_redis
+    image: redis:alpine
