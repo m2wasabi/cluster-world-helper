@@ -1,4 +1,4 @@
-FROM php:7-fpm-alpine
+FROM php:7.4-fpm-alpine
 RUN apk add --no-cache \
         zip \
         libzip-dev \
@@ -10,7 +10,8 @@ RUN apk add --no-cache \
         libxml2 \
         libxml2-dev \
         openssl \
-        openssl-dev 
+        openssl-dev \
+        oniguruma-dev
 RUN docker-php-ext-install \
         pdo_mysql \
         mysqli \
